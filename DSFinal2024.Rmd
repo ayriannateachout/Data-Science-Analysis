@@ -1,0 +1,453 @@
+---
+title: "DSFinal2024"
+author: "Ayrianna Teachout"
+date: "2024-10-01"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+# 1. Introduction
+
+-   **Motivating Question**: Does mental health affect sleeping difficulties in the population of City X?
+-   **Objective**: The objective is to analyze the relationship between mental health and sleep difficulties using statistical and machine learning methods to gain insights into City X's health challenges.
+
+# 2. Dataset Summary
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+
+# Load the dataset
+health_data <- read.csv("Health_of_CityX.csv")
+
+# Statistical summary of the dataset
+summary(health_data)
+head(health_data)
+```
+
+#### This summary provides an overview of key health-related variables in City X. Some notable points include:
+
+-   Population: Ranges from 122 to 11,408, with a median of 3,812.
+
+-   Access to healthcare (ACCESS2_CrudePrev) ranges from 7.5% to 44%.
+
+-   Prevalence of chronic conditions:
+
+    -   Arthritis (ARTHRITIS_CrudePrev): Median of 16.05%.
+
+    -   Binge drinking (BINGE_CrudePrev): Median of 23.7%.
+
+    -   Obesity (OBESITY_CrudePrev): Median of 24.7%, with a maximum of 46.1%.
+
+-   Mental health issues (MHLTH_CrudePrev): Median prevalence is 11.4%, with a maximum of 25.4%.
+
+-   Sleep issues (SLEEP_CrudePrev): Median prevalence of 29.5%, with a maximum of 41.4%.
+
+-   Other health factors include hypertension, diabetes, and cancer, which show variation across the population.
+
+# 3. Exploratory Data Analysis (EDA)
+
+#### Visualizing the distribution of Sleep and Mental Health Prevalence
+
+```{r}
+# Visualizing the distribution of Sleep and Mental Health Prevalence
+hist(health_data$SLEEP_CrudePrev, 
+     main="Distribution of Sleep Issues", 
+     xlab="Sleep Issues Prevalence", 
+     col="lightgreen", border="black")
+
+hist(health_data$MHLTH_CrudePrev, 
+     main="Distribution of Mental Health Issues", 
+     xlab="Mental Health Issues Prevalence", 
+     col="lightblue", border="black")
+
+```
+
+#### Comparison of Distributions: Mental Health Issues vs. Sleep Issues
+
+1.  Distribution of Sleep Issues (Figure 1) The second histogram shows the distribution of sleep issue prevalence. Compared to mental health issues, sleep issues appear to cluster around a higher prevalence range. The values predominantly fall between 25 and 35, with a peak near 30. Similar to the mental health distribution, there are fewer cases at the extreme end (above 40), suggesting that very severe sleep issues are relatively uncommon.
+
+2.  Distribution of Mental Health Issues (Figure 2) This histogram illustrates the distribution of mental health prevalence across individuals. The prevalence values range mostly between 10 and 15, with a noticeable peak near 12-13, indicating that these are the most frequently reported prevalence levels. Beyond a prevalence value of 20, occurrences sharply decline, suggesting fewer individuals report extremely high levels of mental health issues.
+
+#### Optimal Distribution for Mental Health and Sleep Issues
+
+An optimal distribution for both mental health and sleep issues would ideally be left-skewed or concentrated around lower prevalence values. This means the majority of individuals would report low levels of mental health and sleep challenges, reflecting a healthier population.
+
+Mental Health: A healthier distribution would peak closer to 0-5 prevalence, with minimal cases above 10. Sleep Issues: An optimal distribution would cluster between 0-10, indicating minimal difficulties with sleep across the population. However, in the presented data, both histograms indicate moderate to high prevalence levels in mental health and sleep issues. This suggests potential health challenges within the population of City X, possibly pointing to:
+
+An underlying relationship between mental health struggles and sleep disturbances. The need for targeted interventions to address both areas for improved well-being.
+
+# 4 Correlation Analysis
+
+```{r}
+# check correlation between Mental Health and Sleep Issues
+cor(health_data$SLEEP_CrudePrev, health_data$MHLTH_CrudePrev)
+
+# scatter Plot to visualize the relationship
+plot(health_data$MHLTH_CrudePrev, health_data$SLEEP_CrudePrev,
+     main = "Mental Health vs Sleep Issues",
+     xlab = "Prevalence of Mental Health Issues",
+     ylab = "Prevalence of Sleep Issues",
+     col = "blue", pch = 19)
+# correlation matrix for selected variables
+selected_vars <- health_data[, c("MHLTH_CrudePrev", "SLEEP_CrudePrev", "OBESITY_CrudePrev", "BINGE_CrudePrev", "BPHIGH_CrudePrev")]
+cor_matrix <- cor(selected_vars, use="complete.obs")
+cor_matrix
+
+#install if needed
+#install.packages("ggcorrplot")
+
+# plot heatmap of correlation matrix
+library(ggcorrplot)
+ggcorrplot(cor_matrix, method="circle", lab=TRUE, title="Correlation Matrix of Selected Variables")
+```
+
+#### Correlation Overview
+
+The correlation between the prevalence of mental health issues (MHLTH_CrudePrev) and sleep issues (SLEEP_CrudePrev) is strong and positive with a coefficient of 0.81. This indicates that there is a strong relationship between the two variables, suggesting that as mental health issues increase, sleep issues tend to rise as well.
+
+The scatter plot visually supports the strong correlation between mental health and sleep issues by showing a clear positive linear trend, where sleep issues increase as mental health problems rise. The clustering of data points around this upward trend confirms a consistent relationship, with minimal scatter, reinforcing the strong correlation value of 0.81. Additionally, the absence of significant outliers further emphasizes that this relationship is robust across the dataset. Overall, the plot provides visual evidence that mental health significantly affects sleep problems, as indicated by the close and consistent relationship between the two variables.
+
+In the heatmap, the correlation between MHLTH_CrudePrev (mental health) and SLEEP_CrudePrev (sleep issues) is represented with a dark red color. The color scale on the heatmap goes from blue (indicating negative correlation) to red (indicating positive correlation), and the darker the red, the stronger the positive correlation. The value of 0.81 is shown as a dark red circle, confirming the strong positive relationship between these two variables.
+
+This high correlation provides compelling evidence of a possible link between mental health challenges and sleep difficulties. The positive relationship aligns with research indicating that poor mental health often contributes to sleep disorders, such as insomnia or restless sleep. This analysis supports the hypothesis that mental health conditions, such as anxiety and depression, could be significant factors influencing sleep quality.
+
+By using this data, the correlation value of 0.81 strongly suggests that interventions aimed at improving mental health may also have a positive impact on reducing sleep problems, further emphasizing the importance of addressing mental health to promote overall well-being.
+
+# 5. Linear Regression: Does Mental Health Affect Sleep Issues
+
+```{r}
+#linear regression model
+fit_sleep_mh <- lm(SLEEP_CrudePrev ~ MHLTH_CrudePrev, data = health_data)
+summary(fit_sleep_mh)
+
+#regression line
+plot(health_data$MHLTH_CrudePrev, health_data$SLEEP_CrudePrev,
+     main = "Mental Health vs Sleep Issues",
+     xlab = "Prevalence of Mental Health Issues",
+     ylab = "Prevalence of Sleep Issues",
+     col = "blue", pch = 19)
+#correlation matrix for selected variables
+selected_vars <- health_data[, c("MHLTH_CrudePrev", "SLEEP_CrudePrev", "OBESITY_CrudePrev", "BINGE_CrudePrev", "BPHIGH_CrudePrev")]
+abline(fit_sleep_mh, col="red")
+```
+
+#### Linear Regression Overview
+
+Linear regression applied to explore the relationship between mental health issues and sleep problems, using mental health prevalence (MHLTH_CrudePrev) as the predictor variable and sleep issues prevalence (SLEEP_CrudePrev) as the response variable. The results of the linear regression model show a significant positive association between mental health issues and sleep problems.
+
+Model Interpretation:
+
+-   The intercept of the model is 19.06, suggesting that even when mental health prevalence is zero, the base level of sleep issues is expected to be around 19.06%.
+
+-   The slope coefficient for mental health prevalence is 0.88, indicating that for each 1% increase in mental health issues, the prevalence of sleep problems increases by approximately 0.88%.
+
+-   The p-value (\< 2e-16) for the mental health variable shows that this relationship is statistically significant at a 99.9% confidence level, confirming that mental health issues have a strong effect on sleep problems.
+
+-   The R-squared value of 0.662 indicates that around 66% of the variability in sleep issues can be explained by changes in mental health issues. This demonstrates that mental health is a key predictor of sleep problems.
+
+-   The F-statistic (383.8) with an extremely low p-value suggests that the overall model is highly significant.
+
+-   The scatter plot, enhanced with a red regression line, shows a clear upward trend between mental health and sleep issues. The regression line visually confirms the positive relationship, where higher levels of mental health issues correspond to higher prevalence of sleep issues. The relatively tight clustering of data points around the line indicates a strong correlation, reinforcing the statistical findings.
+
+Overall, the linear regression analysis provides strong evidence of a significant and positive relationship between mental health and sleep problems, highlighting the potential impact of mental health issues on sleep disturbances.
+
+# 6. Transformed Data Analysis
+
+```{r}
+#transformation on Sleep and Mental Health Prevalence
+health_data$log_Sleep <- log(health_data$SLEEP_CrudePrev)
+health_data$log_MH <- log(health_data$MHLTH_CrudePrev)
+
+#regression on transformed data
+fit_log <- lm(log_Sleep ~ log_MH, data = health_data)
+summary(fit_log)
+
+#transformed relationship
+plot(health_data$log_MH, health_data$log_Sleep,
+     main="Log-Transformed Mental Health vs Sleep Issues",
+     xlab="Log Mental Health Prevalence", 
+     ylab="Log Sleep Issues Prevalence")
+abline(fit_log, col="red")
+
+```
+
+#### Log Transformation Overview
+
+Log transformation applied to both the mental health prevalence and sleep issues prevalence data to further explore the relationship between these variables. Log transformations are useful when dealing with skewed data or when the relationship between variables is not strictly linear. By transforming the data, I can better understand the nature of the relationship and how small changes in mental health prevalence may affect sleep problems in relative terms.
+
+Model Interpretation:
+
+-   The intercept of the model is 2.42, meaning when the log of mental health prevalence is zero, the expected log value of sleep issues prevalence is approximately 2.42. This corresponds to the baseline level of sleep issues in a logarithmic scale.
+
+-   The slope coefficient for log mental health prevalence is 0.39, indicating that for each 1% increase in the log-transformed mental health issues, the log-transformed sleep issues increase by approximately 0.39%. This result suggests that mental health prevalence has a significant, consistent effect on sleep issues even after applying a log transformation.
+
+-   The p-value (\< 2e-16) for log mental health prevalence shows that this relationship remains statistically significant, further supporting the hypothesis that mental health issues are associated with sleep problems.
+
+-   The R-squared value of 0.704 indicates that about 70% of the variability in log-transformed sleep issues can be explained by the log-transformed mental health prevalence. This suggests that the log-transformed model fits the data even better than the original linear model, providing a more refined understanding of how mental health affects sleep issues.
+
+-   The F-statistic (466.2) with a very low p-value shows that the overall model is highly significant.
+
+-   In the scatter plot of log-transformed data, the relationship between mental health and sleep problems remains positive and strong. The red regression line shows a clear upward trend, confirming that as log mental health prevalence increases, log sleep issues also rise. The log transformation smooths out any non-linearities in the data, providing a more consistent and proportional relationship between mental health and sleep issues.
+
+The log-transformed analysis strengthens the argument that mental health significantly affects sleep problems. The consistency of the relationship after the transformation suggests that both small and large increases in mental health issues have a predictable effect on sleep difficulties. This transformation highlights that mental health may have a logarithmic influence on sleep, meaning even small improvements in mental health could lead to noticeable reductions in sleep problems.
+
+# 7. Multivariate Regression
+
+```{r}
+#multivariate regression model with other variables
+multivariate_model <- lm(SLEEP_CrudePrev ~ MHLTH_CrudePrev + OBESITY_CrudePrev + BINGE_CrudePrev, data = health_data)
+summary(multivariate_model)
+
+#install if needed
+#install.packages("scatterplot3d")
+library(scatterplot3d)
+#3D scatter plot with two predictors and outcome variable
+scatterplot3d(health_data$MHLTH_CrudePrev, health_data$OBESITY_CrudePrev, health_data$SLEEP_CrudePrev,
+              pch = 16, highlight.3d = TRUE, type = "h",
+              xlab = "Mental Health Prevalence",
+              ylab = "Obesity Prevalence",
+              zlab = "Sleep Issues Prevalence")
+
+```
+
+#### Multivariate Regression Overview
+
+Multivariate regression model applied to assess how multiple factors, including mental health prevalence, obesity prevalence, and binge drinking, may collectively affect sleep issues prevalence. The goal of this analysis is to determine if other variables—alongside mental health—have a significant impact on sleep problems.
+
+Model Interpretation:
+
+-   Intercept (12.44): This indicates that when all the predictor variables (mental health, obesity, binge drinking) are zero, the baseline prevalence of sleep issues would be approximately 12.44%. This is the expected level of sleep problems when none of the predictors are present.
+
+-   Mental Health Prevalence (0.35): The coefficient for mental health is 0.35, meaning for each 1% increase in mental health issues, sleep issues increase by approximately 0.35%, holding other variables constant. This confirms that mental health issues have a statistically significant impact on sleep problems (p-value \< 0.001), reinforcing the hypothesis that mental health affects sleep.
+
+-   Obesity Prevalence (0.46): The coefficient for obesity is 0.46, showing a stronger effect than mental health. For each 1% increase in obesity prevalence, sleep issues increase by 0.46%, holding other variables constant. This variable also has a significant impact on sleep issues (p-value \< 0.001), suggesting that obesity plays an important role in sleep disturbances.
+
+-   Binge Drinking Prevalence (0.05): The coefficient for binge drinking is 0.05, which is much smaller and not statistically significant (p-value = 0.286). This indicates that binge drinking does not have a meaningful effect on sleep issues in this model.
+
+-   The R-squared value of 0.818 indicates that around 81.8% of the variability in sleep issues prevalence can be explained by the combination of mental health, obesity, and binge drinking. This shows that the model fits the data well, and these variables are strong predictors of sleep problems.
+
+-   The F-statistic (291.4) with a very low p-value further confirms that the model is statistically significant overall.
+
+-   The 3D scatter plot visualizes the relationship between mental health, obesity, and sleep issues. The vertical axis represents the prevalence of sleep issues, while the horizontal axes represent mental health and obesity prevalence. The color gradient (from red to black) emphasizes the density of the data points, showing that as both mental health and obesity increase, sleep problems also rise, which is consistent with the regression results. The plot clearly shows that both mental health and obesity are strong predictors of sleep problems.
+
+This multivariate regression analysis supports the idea that mental health significantly affects sleep issues, but it also highlights that obesity has an even stronger influence on sleep problems. Binge drinking, on the other hand, does not seem to have a significant effect. The analysis shows that interventions addressing both mental health and obesity could be key in improving sleep quality.
+
+# 8. Classification Model
+
+```{r}
+#train and test sets
+health_data$Sleep_Issues_High <- ifelse(health_data$SLEEP_CrudePrev > median(health_data$SLEEP_CrudePrev), 1, 0)
+set.seed(123)
+sample <- sample(c(TRUE, FALSE), nrow(health_data), replace=TRUE, prob=c(0.7, 0.3))
+train <- health_data[sample, ]
+test <- health_data[!sample, ]
+
+#logistic regression: Predict if Sleep Issues > threshold (binary classification)
+health_data$Sleep_Issues_High <- ifelse(health_data$SLEEP_CrudePrev > median(health_data$SLEEP_CrudePrev), 1, 0)
+logistic_model <- glm(Sleep_Issues_High ~ MHLTH_CrudePrev + OBESITY_CrudePrev, data = train, family = binomial)
+summary(logistic_model)
+
+#test accuracy on the test set
+predicted <- predict(logistic_model, test, type="response")
+pred_class <- ifelse(predicted > 0.5, 1, 0)
+accuracy <- mean(pred_class == test$Sleep_Issues_High)
+accuracy
+
+#install.packages("caret")
+#install.packages("pROC")
+library(caret)
+library(pROC)
+#confusion matrix
+confusionMatrix(as.factor(pred_class), as.factor(test$Sleep_Issues_High))
+
+#plotted confusion matrix 
+conf_matrix <- table(pred_class, test$Sleep_Issues_High)
+fourfoldplot(conf_matrix, color = c("#FF6347", "#4682B4"), main="Confusion Matrix")
+
+
+#ROC curve
+roc_curve <- roc(test$Sleep_Issues_High, predicted)
+
+#plotted ROC curve
+plot(roc_curve, main="ROC Curve for Logistic Regression Model")
+abline(a=0, b=1, col="red", lty=2) # Add diagonal line
+
+#predicted vs actual classes
+plot(test$Sleep_Issues_High, pred_class,
+     main = "Predicted vs Actual Sleep Issues",
+     xlab = "Actual Sleep Issues (High = 1, Low = 0)",
+     ylab = "Predicted Sleep Issues (High = 1, Low = 0)",
+     col = ifelse(test$Sleep_Issues_High == pred_class, "green", "red"),
+     pch = 19)
+
+legend("topright", legend=c("Correct Prediction", "Incorrect Prediction"), col=c("green", "red"), pch=19)
+
+
+```
+
+#### Classification Model Overview
+
+Logistic regression applied to classify whether sleep issues are high or low based on predictors such as mental health prevalence (MHLTH_CrudePrev) and obesity prevalence (OBESITY_CrudePrev). The results from the logistic regression model and the evaluation through confusion matrix, ROC curve, and predicted vs actual comparison help demonstrate how mental health might affect sleep issues.
+
+1.  Logistic Regression Model The logistic regression model was fit to classify sleep issues as either high (1) or low (0), using mental health and obesity prevalence as predictors. The coefficients for both mental health and obesity are positive, meaning that higher levels of these factors increase the likelihood of having higher sleep issues. Specifically, the coefficient for mental health (0.466) suggests that an increase in mental health prevalence increases the odds of high sleep issues. Both mental health and obesity are statistically significant predictors of sleep issues, with p-values less than 0.05 (p-value for mental health = 0.00141, and for obesity = 1.30e-05).
+2.  Confusion Matrix The confusion matrix visually represents the model's performance by comparing the actual and predicted classifications for sleep issues. The accuracy of the model on the test set is 89.1%, meaning that the model correctly classified high and low sleep issues in 89.1% of cases. The matrix shows: 27 true negatives (correctly classified low sleep issues) 22 true positives (correctly classified high sleep issues) 4 false negatives (actual high sleep issues classified as low) 2 false positives (actual low sleep issues classified as high)
+3.  ROC Curve The ROC (Receiver Operating Characteristic) curve shows the trade-off between sensitivity and specificity at different thresholds. The closer the curve is to the top-left corner, the better the model performs. In this case, the ROC curve shows a high level of discrimination between high and low sleep issues, further confirming the model's strong performance. The diagonal red line represents a random model (50% chance), and the model's performance clearly exceeds this line.
+4.  Predicted vs Actual Sleep Issues This plot compares the predicted sleep issue classifications (high vs. low) against the actual observed classifications. Correct predictions are marked in green, and incorrect predictions are marked in red. The few red points indicate that the model generally performs well, with only a few misclassifications.
+
+This classification analysis shows that mental health prevalence has a significant impact on predicting whether sleep issues are high or low. The logistic regression model, with a high accuracy of 89.1%, suggests that mental health, along with obesity, is an important factor in determining sleep problems. The ROC curve and confusion matrix both reinforce the idea that the model performs well in distinguishing between high and low sleep issues, further supporting the hypothesis that mental health significantly affects sleep problems.
+
+# 8. Non-Parametric Analysis (K-Means Clustering Analysis)
+
+```{r}
+library(cluster)
+library(factoextra)
+library(NbClust)
+
+#select columns related to Mental Health and Sleep for clustering
+data_cluster <- health_data[, c("MHLTH_CrudePrev", "SLEEP_CrudePrev")]
+
+#standardize the data
+data_scaled <- scale(data_cluster)
+
+#elbow method to determine the best number of clusters
+fviz_nbclust(data_scaled, kmeans, method = "wss") + 
+  labs(subtitle = "Elbow Method")
+
+#optimal 3 
+k <- 3
+
+#perform K-means clustering
+kmeans_model <- kmeans(data_scaled, centers = k, nstart = 25)
+
+#clusters with polygon visualization
+fviz_cluster(kmeans_model, data = data_scaled, geom = "point", ellipse.type = "convex") +
+  labs(title = "K-Means Clustering (Mental Health vs Sleep Issues)")
+
+#AGNES hierarchical clustering
+agnes_model <- agnes(data_scaled, method = "ward")
+
+# Dendrogram for AGNES clustering
+pltree(agnes_model, cex = 0.6, hang = -1, main = "Dendrogram of AGNES Clustering")
+
+# Cut the dendrogram into the optimal number of clusters (replace with your k)
+cut_agnes <- cutree(agnes_model, k = 3)
+
+#AGNES clustering result with ellipse
+fviz_cluster(list(data = data_scaled, cluster = cut_agnes)) +
+  labs(title = "AGNES Clustering (Mental Health vs Sleep Issues)")
+
+#DIANA hierarchical clustering
+diana_model <- diana(data_scaled)
+
+#dendrogram for DIANA clustering
+pltree(diana_model, cex = 0.6, hang = -1, main = "Dendrogram of DIANA Clustering")
+
+cut_diana <- cutree(diana_model, k = 3)
+
+#DIANA clustering result with ellipse
+fviz_cluster(list(data = data_scaled, cluster = cut_diana)) +
+  labs(title = "DIANA Clustering (Mental Health vs Sleep Issues)")
+
+#elliptical visualization for K-Means clusters
+fviz_cluster(kmeans_model, data = data_scaled, ellipse.type = "euclid", geom = "point") +
+  labs(title = "Elliptical Visualization for K-Means Clustering")
+
+```
+
+#### Non-parametric Analysis Overview
+
+Non-parametric clustering methods applied to explore the relationship between mental health prevalence and sleep issues. Non-parametric methods like K-Means, AGNES (Agglomerative Nesting), and DIANA (Divisive Analysis) help identify patterns and groupings within the data without making assumptions about the underlying distribution. These clustering methods can highlight distinct groups or patterns in how mental health issues might affect sleep issues, allowing for a deeper understanding of the relationship between the two variables.
+
+**1. Elbow Method for K-Means Clustering**
+
+-   The Elbow Method helps determine the optimal number of clusters by plotting the total within-cluster sum of squares against the number of clusters (k). The "elbow" point, where the rate of decrease sharply slows, indicates the ideal number of clusters.
+-   In the elbow plot above, the elbow occurs at k = 3, suggesting that dividing the data into three clusters will provide a good balance between simplicity and accuracy.
+
+2.  **K-Means Clustering**
+
+-   After identifying three clusters as optimal, you applied K-Means clustering to group the data based on mental health prevalence and sleep issues. The scatter plot with colored clusters shows how the data is segmented into three distinct groups:
+
+-   Cluster 1 (red): Represents data points where both mental health and sleep issues are relatively low.
+
+-   Cluster 2 (green): Represents data points with moderate levels of mental health and sleep issues.
+
+-   Cluster 3 (blue): Represents data points with high mental health and high sleep issues.
+
+-   This method visually supports the hypothesis that mental health impacts sleep issues, as the clusters suggest a gradient where higher mental health prevalence is associated with higher sleep issues.
+
+3.  **AGNES Clustering (Agglomerative Nesting)**
+
+-   AGNES is a hierarchical clustering method that builds clusters by merging smaller clusters step-by-step. The dendrogram (tree diagram) shows how individual points merge into clusters as the hierarchy progresses.
+
+-   In the analysis, cutting the dendrogram at k = 3 results in three clusters. The scatter plot shows how these clusters are formed, similar to K-Means, but with hierarchical structure, grouping data points based on proximity.
+
+-   The hierarchical approach further reinforces the grouping of mental health and sleep issues, indicating that higher mental health prevalence corresponds with higher sleep problems.
+
+4.  **DIANA Clustering (Divisive Analysis)**
+
+-   DIANA is another hierarchical method but differs from AGNES as it starts with all data points in one cluster and splits them step-by-step. The resulting dendrogram visualizes how clusters are split from a single group.
+
+-   The scatter plot of DIANA clustering also shows the formation of three distinct clusters, highlighting similar groupings as K-Means and AGNES.
+
+-   This method supports the findings that mental health and sleep issues form distinct clusters, with higher mental health prevalence generally leading to higher sleep issues.
+
+-   
+
+5.  **Elliptical Visualization of K-Means Clustering**
+
+-   To provide further insight into the relationships between clusters, the elliptical visualization shows how each cluster is spread in terms of mental health and sleep issues. This adds clarity to how tightly grouped or spread out the data points are within each cluster.
+
+-   This visualization emphasizes that mental health prevalence is strongly related to sleep issues, as the ellipses for higher mental health and sleep issues cluster tightly, suggesting a robust relationship.
+
+    The non-parametric clustering analysis, through K-Means, AGNES, and DIANA, reveals that mental health prevalence and sleep issues can be grouped into distinct clusters. The fact that higher mental health problems often coincide with higher sleep issues supports the idea that mental health strongly affects sleep problems. The consistency of the clustering patterns across different methods further strengthens the evidence for this relationship.
+
+# 10. Conclusion
+
+### a. Motivating Questions
+
+This analysis was driven by the question: **Does mental health affect sleeping difficulties in the population of City X?** This question is crucial as mental health issues like anxiety and depression have been known to influence sleep quality, potentially leading to chronic sleep disturbances. Understanding this relationship could inform public health strategies and interventions that simultaneously target mental health and sleep issues, improving overall well-being in the population.
+
+### b. Analysis Methods
+
+Several statistical and machine learning methods were applied to address the motivating question, including correlation analysis, linear regression, logistic regression, multivariate analysis, and non-parametric clustering. These methods were chosen to uncover both linear and non-linear relationships between mental health prevalence and sleep problems and to determine if mental health is a significant predictor of sleep issues.
+
+-   **Correlation Analysis** was used to determine the strength and direction of the relationship between mental health and sleep issues.
+
+-   **Linear and Logistic Regression** were applied to quantify the relationship and predict the likelihood of high sleep issues based on mental health prevalence.
+
+-   **Multivariate Regression** included other health factors like obesity and binge drinking to assess their combined impact on sleep issues.
+
+-   **Non-Parametric Clustering (K-Means, AGNES, DIANA)** was used to explore patterns and segment the population into groups based on the prevalence of mental health and sleep issues.
+
+### c. Comparison of Methods
+
+While correlation and regression analyses provided insight into the strength and direction of the relationship, the multivariate regression allowed for a more comprehensive understanding by incorporating additional predictors. The non-parametric clustering methods revealed groupings within the data, showing distinct clusters where higher mental health issues corresponded with higher sleep problems. This layering of methods offered complementary insights, with regression models quantifying relationships and clustering highlighting patterns within subgroups.
+
+### d. Summary of Findings
+
+-   **Correlation Analysis** revealed a strong positive correlation (0.81) between mental health and sleep issues, indicating that as mental health problems increase, so do sleep difficulties.
+
+-   **Linear Regression** showed that for each 1% increase in mental health prevalence, sleep issues increase by 0.88%. The model explained 66% of the variance in sleep issues.
+
+-   **Log-Transformed Regression** improved the model fit, explaining 70% of the variance, suggesting that mental health affects sleep in a logarithmic relationship.
+
+-   **Multivariate Regression** identified obesity as a significant predictor of sleep issues alongside mental health, with both factors explaining over 80% of the variability in sleep problems.
+
+-   **Clustering Analysis** consistently identified three groups: low mental health and sleep issues, moderate levels of both, and high levels of both, indicating a clear gradient in the relationship.
+
+### e. Conclusion and Recommendations
+
+The findings from this analysis strongly suggest that mental health significantly affects sleep difficulties in City X. The relationship is not only linear but may also be logarithmic, where even small improvements in mental health could lead to noticeable reductions in sleep problems. Additionally, the multivariate analysis shows that addressing obesity alongside mental health could further mitigate sleep issues.
+
+**Recommendations**:
+
+1.  **Targeted Mental Health Interventions**: Programs focused on improving mental health, such as therapy, stress reduction, and mental wellness workshops, could lead to better sleep outcomes.
+
+2.  **Integrated Health Programs**: Interventions addressing both mental health and obesity may have the most significant impact on improving sleep quality in the population.
+
+3.  **Further Research**: Investigating other potential factors like socioeconomic status, access to healthcare, and lifestyle habits would provide a more holistic understanding of sleep disturbances in City X.
+
+By addressing the mental health and sleep problem relationship, City X can improve overall health outcomes and promote better quality of life for its residents.
